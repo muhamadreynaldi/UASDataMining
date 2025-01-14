@@ -101,9 +101,8 @@ y_combined = pd.concat([pd.Series([prediction], name='Drug'), y_test.reset_index
 
 y_combined_pred = model.predict(X_combined)
 
-with st.expander("⚙️ Persiapan Data"):
+with st.expander("⚙️ Evaluasi Model"):
     st.markdown("---")
-    st.subheader("⚙️ Evaluasi Model")
     accuracy_combined = accuracy_score(y_combined, y_combined_pred)
     st.markdown(f"### Akurasi Dinamis: **{accuracy_combined * 100:.2f}%**")
 
