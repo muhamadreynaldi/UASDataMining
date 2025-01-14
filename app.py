@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report, accuracy_score
 import matplotlib.pyplot as plt
 import seaborn as sns
+import joblib
 
 data = pd.read_csv('Classification.csv')
 
@@ -20,13 +21,16 @@ y = data['Drug']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-model = xgb.XGBClassifier(use_label_encoder=False, eval_metric='mlogloss')
-model.fit(X_train, y_train)
+try:
+    model = joblib.load('xgb_model.pkl')
+except FileNotFoundError:
+    model = xgb.XGBClassifier(use_label_encoder=False, eval_metric='mlogloss')
+    model.fit(X_train, y_train)
+    joblib.dump(model, 'xgb_model.pkl')
 
 st.set_page_config(page_title="Klasifikasi Obat dengan XGBoost", layout="wide")
 
 st.title('🩺 Prediksi Kategori Obat dengan XGBoost')
-
 st.info('Aplikasi ini memprediksi kategori obat berdasarkan fitur-fitur input menggunakan model XGBoost.')
 
 with st.sidebar:
@@ -96,18 +100,14 @@ st.dataframe(
     hide_index=True
 )
 
-X_combined = pd.concat([input_data, X_test], ignore_index=True)
-y_combined = pd.concat([pd.Series([prediction], name='Drug'), y_test.reset_index(drop=True)])
-
-y_combined_pred = model.predict(X_combined)
-
 with st.expander("⚙️ Evaluasi Model"):
     st.markdown("---")
-    accuracy_combined = accuracy_score(y_combined, y_combined_pred)
-    st.markdown(f"### Akurasi Dinamis: **{accuracy_combined * 100:.2f}%**")
+    y_combined_pred = model.predict(X_test)
+    accuracy_combined = accuracy_score(y_test, y_combined_pred)
+    st.markdown(f"### Akurasi Model: **{accuracy_combined * 100:.2f}%**")
 
-    st.markdown("### 📈 Laporan Klasifikasi Dinamis")
-    classification_dict_dynamic = classification_report(y_combined, y_combined_pred, output_dict=True)
+    st.markdown("### 📈 Laporan Klasifikasi")
+    classification_dict_dynamic = classification_report(y_test, y_combined_pred, output_dict=True)
 
     for label, metrics in classification_dict_dynamic.items():
         if isinstance(metrics, dict):
